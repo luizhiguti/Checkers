@@ -12,6 +12,7 @@ blue = (0, 0, 255)
 white = (255, 255, 255)
 green = (0, 255, 0)
 golden = (255, 215, 0)
+red = (255,0,0)
 
 #sets
 boardSize = 600
@@ -74,7 +75,10 @@ class Board:
                     color = white
                 if column == 2:
                     color = green
-                pygame.draw.rect(screen, color, (x, y, size, size))            
+                if column == "c":
+                    color = red
+                pygame.draw.rect(screen, color, (x, y, size, size))       
+
 
         #set the pieces on the board
         for rowIndex, row in enumerate(self.pieces):    
@@ -343,13 +347,13 @@ class Game:
 
     @staticmethod
     def captureAvailable(pieces,turn):
-        #return true if any in it's turn can capture 
+        #return true if any piece in it's turn can capture 
         moves = []
         if turn % 2 == 0:   #blue's turn 
             for i in range(len(pieces)):
                 for j in range(len(pieces)):
                     #for each piece check if there are capturing moves
-                    if pieces[i][j] == "b" or pieces == "bk":
+                    if pieces[i][j] == "b" or pieces[i][j] == "bk":
                         if len(Game.validCapturingMoves([i,j], pieces)) != 0:
                         #if capturing moves is not empty, update moves    
                             moves.append(Game.validCapturingMoves([i,j], pieces))
@@ -357,7 +361,7 @@ class Game:
         else:   #yellows's turn 
             for i in range(len(pieces)):
                 for j in range(len(pieces)):
-                    if pieces[i][j] == "y" or pieces == "yk":
+                    if pieces[i][j] == "y" or pieces[i][j] == "yk":
                         if len(Game.validCapturingMoves([i,j], pieces)) != 0:
                             moves.append(Game.validCapturingMoves([i,j], pieces))
     
@@ -369,6 +373,40 @@ class Game:
         else:
             return True
 
+    @staticmethod
+    def ableToMove(pieces, turn):
+        #return true if any any piece in it's turn can move, capturing or simple
+        moves = []
+        if turn % 2 == 0:   #blue's turn 
+            for i in range(len(pieces)):
+                for j in range(len(pieces)):
+                    #for each piece check if there are capturing moves
+                    if pieces[i][j] == "b" or pieces[i][j] == "bk":
+                        if len(Game.validCapturingMoves([i,j], pieces)) != 0:
+                        #if capturing moves is not empty, update moves    
+                            moves.append(Game.validCapturingMoves([i,j], pieces))
+                        if len(Game.validSimpleMoves([i,j], pieces)) != 0:
+                            #if simple moves is not empty, update moves
+                            moves.append(Game.validSimpleMoves([i,j], pieces))
+
+        else:   #yellows's turn 
+            for i in range(len(pieces)):
+                for j in range(len(pieces)):
+                    if pieces[i][j] == "y" or pieces[i][j] == "yk":
+                        if len(Game.validCapturingMoves([i,j], pieces)) != 0:
+                            moves.append(Game.validCapturingMoves([i,j], pieces))
+                        if len(Game.validSimpleMoves([i,j], pieces)) != 0:
+                            moves.append(Game.validSimpleMoves([i,j], pieces))
+
+        # print("moves)")
+        # print(moves)
+        if len(moves) == 0:
+            #if moves is empty there is no capturing moves
+            return False
+        else:
+            return True
+
+
     def showMoves(self,e):
         # show a piece's valids move  
 
@@ -378,9 +416,13 @@ class Game:
             moves = Game.validCapturingMoves(index, self.board.pieces)
         else:
             moves = Game.validSimpleMoves(index, self.board.pieces)
-        print(moves)
+        # print(moves)
+        
+        if len(moves) == 0:
+            #if no moves available, the sqaure becomes red
+            self.board.squares[index[0]][index[1]] = "c"
         Game.setValidMoves(moves, self.board.squares)
-        print("showmoves")
+        # print("showmoves")
 
     @staticmethod
     def becomeKing(current, next, pieces):
@@ -429,8 +471,8 @@ class Game:
                 elif self.board.pieces[nextIndex[0]][nextIndex[1]] == "b" or self.board.pieces[nextIndex[0]][nextIndex[1]] == "bk":
                     self.board.yellowPiecesRemaining -= 1
 
-                print (nextIndex)
-                print((Game.validCapturingMoves(nextIndex, self.board.pieces)))
+                # print (nextIndex)
+                # print((Game.validCapturingMoves(nextIndex, self.board.pieces)))
                 if len((Game.validCapturingMoves(nextIndex, self.board.pieces))) != 0: 
                     self.multipleCapture = True
                 else: 
@@ -443,8 +485,9 @@ class Game:
         #unselect the legal moves
         for i in range(len(self.board.squares)):
             for j in range(len(self.board.squares[i])):
-                if (self.board.squares[i][j] == 2):
+                if self.board.squares[i][j] == 2 or self.board.squares[i][j] == "c":
                     self.board.squares[i][j] = 0 
+                
 
     def checkTurn(self, e, turn):
         #check if it's the selected piece's turn
@@ -471,13 +514,23 @@ class Game:
 
     def gameOver(self):
         #if htere is a winner, return his tag: "BLUE" or "YELLOW"
-        # else return false
-        if self.board.yellowPiecesRemaining == 0:
-            return "BLUE"
-        elif self.board.bluePiecesRemaining == 0:
-            return "YELLOW"
-        else: 
-            False 
+        # # else return false
+        if not Game.ableToMove(self.board.pieces, self.turn):
+            if self.turn % 2 == 0:  #blue's turn, not able to move, yellow wins
+                return "YELLOW"
+            else:
+                return "BLUE"
+
+        else:
+            return False
+
+
+        # if self.board.yellowPiecesRemaining == 0:
+        #     return "BLUE"
+        # elif self.board.bluePiecesRemaining == 0:
+        #     return "YELLOW"
+        # else: 
+        #     False 
 
     def winnerScreen(self, winner):
         if winner == "BLUE":
@@ -530,7 +583,7 @@ while True:
                     game.moving = True
                     game.showMoves(e)
                     posMoving = e
-                    print(game.moving)
+                    # print(game.moving)
                     # # print(e.pos)
                     # # aux = game.getPieceIndex(e.pos)
                     # aux2 = game.getArrayPieceIndex(e.pos)
@@ -560,12 +613,12 @@ while True:
                     
                 # aux = game.getArrayPieceIndex(e.pos)
                 # print(aux)
-                for i in range(len(game.board.squares)):
-                    print(game.board.squares[i])
-                print("------------------------------------------")
+                # for i in range(len(game.board.squares)):
+                #     print(game.board.squares[i])
+                # print("------------------------------------------")
 
-                for i in range(len(game.board.pieces)):
-                    print(game.board.pieces[i])
+                # for i in range(len(game.board.pieces)):
+                #     print(game.board.pieces[i])
             #     print(Board.getPieceIndex(e.pos))
             #     print(board.isValidMove(e))
             #     if board.isValidMove(e):
