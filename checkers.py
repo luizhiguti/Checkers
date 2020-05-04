@@ -2,7 +2,6 @@ import pygame
 
 #Rules used: https://www.thesprucecrafts.com/play-checkers-using-standard-rules-409287
 #yelllow ones start
-#at the moment the king pieces does not work 
 
 
 #constants
@@ -21,7 +20,6 @@ radius = size // 2
 
 screen = pygame.display.set_mode((boardSize, boardSize))
      
-
 clk = pygame.time.Clock()
 
 pygame.init()
@@ -100,7 +98,6 @@ class Game:
     def __init__(self, board):
         self.board = board
         self.turn = 1
-        #self.thereWasACapture = False
         self.moved = False
         self.moving = False
         self.multipleCapture = False
@@ -365,8 +362,6 @@ class Game:
                         if len(Game.validCapturingMoves([i,j], pieces)) != 0:
                             moves.append(Game.validCapturingMoves([i,j], pieces))
     
-        # print("moves)")
-        # print(moves)
         if len(moves) == 0:
             #if moves is empty there is no capturing moves
             return False
@@ -398,14 +393,11 @@ class Game:
                         if len(Game.validSimpleMoves([i,j], pieces)) != 0:
                             moves.append(Game.validSimpleMoves([i,j], pieces))
 
-        # print("moves)")
-        # print(moves)
         if len(moves) == 0:
             #if moves is empty there is no capturing moves
             return False
         else:
             return True
-
 
     def showMoves(self,e):
         # show a piece's valids move  
@@ -416,13 +408,11 @@ class Game:
             moves = Game.validCapturingMoves(index, self.board.pieces)
         else:
             moves = Game.validSimpleMoves(index, self.board.pieces)
-        # print(moves)
         
         if len(moves) == 0:
             #if no moves available, the sqaure becomes red
             self.board.squares[index[0]][index[1]] = "c"
         Game.setValidMoves(moves, self.board.squares)
-        # print("showmoves")
 
     @staticmethod
     def becomeKing(current, next, pieces):
@@ -441,7 +431,6 @@ class Game:
         
         return False
 
-
     def move(self,current, next):
         # check if 'next' is a valid move, then move
         currentIndex = Game.getArrayPieceIndex(current.pos)
@@ -458,8 +447,7 @@ class Game:
                 self.board.pieces[nextIndex[0]][nextIndex[1]] = aux
             
             self.board.pieces[currentIndex[0]][currentIndex[1]] = 0
-
-            #self.moving = False
+            
             self.turn += 1
 
             #for capturing moves, remove the captured piece and update the amount of pieces remaining
@@ -471,16 +459,10 @@ class Game:
                 elif self.board.pieces[nextIndex[0]][nextIndex[1]] == "b" or self.board.pieces[nextIndex[0]][nextIndex[1]] == "bk":
                     self.board.yellowPiecesRemaining -= 1
 
-                # print (nextIndex)
-                # print((Game.validCapturingMoves(nextIndex, self.board.pieces)))
                 if len((Game.validCapturingMoves(nextIndex, self.board.pieces))) != 0: 
                     self.multipleCapture = True
                 else: 
                     self.multipleCapture = False         
-
-            # self.turn += 1
-            #self.moving = False
-            # self.moved = True
 
         #unselect the legal moves
         for i in range(len(self.board.squares)):
@@ -488,7 +470,6 @@ class Game:
                 if self.board.squares[i][j] == 2 or self.board.squares[i][j] == "c":
                     self.board.squares[i][j] = 0 
                 
-
     def checkTurn(self, e, turn):
         #check if it's the selected piece's turn
         index = Game.getArrayPieceIndex(e.pos)
@@ -513,8 +494,8 @@ class Game:
             return "yellow"
 
     def gameOver(self):
-        #if htere is a winner, return his tag: "BLUE" or "YELLOW"
-        # # else return false
+        # if htere is a winner, return his tag: "BLUE" or "YELLOW"
+        # else return false
         if not Game.ableToMove(self.board.pieces, self.turn):
             if self.turn % 2 == 0:  #blue's turn, not able to move, yellow wins
                 return "YELLOW"
@@ -523,14 +504,6 @@ class Game:
 
         else:
             return False
-
-
-        # if self.board.yellowPiecesRemaining == 0:
-        #     return "BLUE"
-        # elif self.board.bluePiecesRemaining == 0:
-        #     return "YELLOW"
-        # else: 
-        #     False 
 
     def winnerScreen(self, winner):
         if winner == "BLUE":
@@ -543,12 +516,23 @@ class Game:
         y = (boardSize - text.get_height()) // 2
         screen.blit(text, (x,y))
     
+    def processEvents(self, e):
+        if not self.moving:
+            if self.checkTurn(e,self.turn):
+                self.moving = True
+                self.showMoves(e)
+                self.posMoving = e
+            
+        elif self.moving:
+            self.move(self.posMoving, e)
+            self.moving = False 
+            if self.multipleCapture:
+                self.turn += 1
 
 if __name__ == "__main__":
     board = Board(size)
     game = Game(board)
     multipleCapture = False
-    # moving = False
 
 #loop
 while True:
@@ -556,8 +540,6 @@ while True:
     clk.tick(60) # set 60 frames per second 
     # Rules
     pygame.display.set_caption("%s's turn" % game.getTurn(game.turn))
-    
-
 
     # Draw
     screen.fill(black)
@@ -571,58 +553,8 @@ while True:
     pygame.display.update()
 
     #events
-    # MOUSEBUTTONDOWN: press mouse button  propriedades pos, button
-    # MOUSEBUTTONUP: release mouse button
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             exit()
         if e.type == pygame.MOUSEBUTTONDOWN:
-            if not game.moving:
-                if game.checkTurn(e,game.turn):
-                    #game.thereWasACapture = False
-                    game.moving = True
-                    game.showMoves(e)
-                    posMoving = e
-                    # print(game.moving)
-                    # # print(e.pos)
-                    # # aux = game.getPieceIndex(e.pos)
-                    # aux2 = game.getArrayPieceIndex(e.pos)
-                    # # print(Game.validMoves(aux2, game.board.pieces))
-                    # # print(aux2)
-                    # # print(game.board.squares)
-                    # # print(game.validMoves(aux2, pieces.array))
-            
-            elif game.moving:
-                game.move(posMoving, e)
-                game.moving = False 
-                # print("gamemoving", game.moving)
-                # # print(game.multipleCapture)
-                # print("hereeee")
-                # print(Game.getArrayPieceIndex(e.pos))
-                # print((Game.validCapturingMoves(Game.getArrayPieceIndex(e.pos), game.board.pieces)))
-                if game.multipleCapture:
-                    game.turn += 1
-
-                #     game.showMoves(e)
-                # elif game.moved:
-                #     game.moving = False
-                #     game.turn += 1
-                # print("moved")
-                # print(moving, game.turn)
-                
-                    
-                # aux = game.getArrayPieceIndex(e.pos)
-                # print(aux)
-                # for i in range(len(game.board.squares)):
-                #     print(game.board.squares[i])
-                # print("------------------------------------------")
-
-                # for i in range(len(game.board.pieces)):
-                #     print(game.board.pieces[i])
-            #     print(Board.getPieceIndex(e.pos))
-            #     print(board.isValidMove(e))
-            #     if board.isValidMove(e):
-            #         board.move(posMoving, e)  
-            #         moving = False  
-            #         print (moving)     
-
+            game.processEvents(e)
