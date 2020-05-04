@@ -98,9 +98,9 @@ class Game:
     def __init__(self, board):
         self.board = board
         self.turn = 1
-        self.moved = False
         self.moving = False
         self.multipleCapture = False
+        self.moved = False
 
     @staticmethod
     def setValidMoves(moves, board):
@@ -403,7 +403,6 @@ class Game:
         # show a piece's valids move  
 
         index = Game.getArrayPieceIndex(e.pos)
-        print(index)
         if Game.captureAvailable(self.board.pieces, self.turn):
             moves = Game.validCapturingMoves(index, self.board.pieces)
         else:
@@ -448,6 +447,7 @@ class Game:
             
             self.board.pieces[currentIndex[0]][currentIndex[1]] = 0
             
+            self.moved = True
             self.turn += 1
 
             #for capturing moves, remove the captured piece and update the amount of pieces remaining
@@ -494,8 +494,12 @@ class Game:
             return "yellow"
 
     def gameOver(self):
-        # if htere is a winner, return his tag: "BLUE" or "YELLOW"
+        # if there is a winner, return his tag: "BLUE" or "YELLOW"
         # else return false
+        if self.board.yellowPiecesRemaining == 1 and self.board.bluePiecesRemaining == 1:
+            if not Game.captureAvailable(self.board.pieces, self.turn):
+                return "DRAW" 
+                
         if not Game.ableToMove(self.board.pieces, self.turn):
             if self.turn % 2 == 0:  #blue's turn, not able to move, yellow wins
                 return "YELLOW"
@@ -506,7 +510,15 @@ class Game:
             return False
 
     def winnerScreen(self, winner):
-        if winner == "BLUE":
+        if winner == "DRAW":
+            font = pygame.font.SysFont("arial", 72)
+            text = font.render(str(winner), True, red, black)
+            x = (boardSize - text.get_width()) // 2
+            y = (boardSize - text.get_height()) // 2
+            screen.blit(text, (x,y))
+            return
+
+        elif winner == "BLUE":
             color = blue
         else:
             color = yellow
@@ -522,12 +534,14 @@ class Game:
                 self.moving = True
                 self.showMoves(e)
                 self.posMoving = e
+                self.moved = False
             
         elif self.moving:
             self.move(self.posMoving, e)
             self.moving = False 
             if self.multipleCapture:
-                self.turn += 1
+                if self.moved:
+                    self.turn += 1
 
 if __name__ == "__main__":
     board = Board(size)
