@@ -1,5 +1,6 @@
 # Checkers
 This is a game of checkers created with pygame library. The rules are from the link:
+
 https://www.thesprucecrafts.com/play-checkers-using-standard-rules-409287.
 
 ## Rules 
